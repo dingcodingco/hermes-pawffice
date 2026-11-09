@@ -10,6 +10,7 @@
 
 const { execFile } = require("node:child_process");
 const { layoutAgents } = require("./layout");
+const { t } = require("./i18n");
 
 const HERMES_BIN = process.env.HERMES_BIN || "hermes";
 const API_URL = (process.env.HERMES_API_URL || "http://127.0.0.1:8642").replace(/\/$/, "");
@@ -19,7 +20,10 @@ const MEETING_MS = Number(process.env.OFFICE_MEETING_MS || 12000);
 
 function cli(args, timeout = 30000) {
   return new Promise((resolve, reject) => {
-    execFile(HERMES_BIN, args, { timeout, maxBuffer: 8 * 1024 * 1024 }, (err, stdout, stderr) => {
+    const isJs = HERMES_BIN.endsWith(".js");
+    const bin = isJs ? process.execPath : HERMES_BIN;
+    const finalArgs = isJs ? [HERMES_BIN, ...args] : args;
+    execFile(bin, finalArgs, { timeout, maxBuffer: 8 * 1024 * 1024 }, (err, stdout, stderr) => {
       if (err) return reject(new Error(`hermes ${args.join(" ")} failed: ${(stderr || err.message).trim().slice(0, 300)}`));
       resolve(stdout);
     });
@@ -73,7 +77,7 @@ class HermesOffice {
       title: config.title,
       agents: config.agents.map((a) => ({
         id: a.id, name: a.name, team: a.team, animal: a.animal, profile: a.profile,
-        status: "offline", task: "확인 중", location: "desk",
+        status: "offline", task: t(config.lang, "task_checking"), location: "desk",
       })),
       meeting: { active: false, topic: "", members: [] },
       kanban: [],
@@ -103,12 +107,12 @@ class HermesOffice {
     for (const a of this.state.agents) {
       const p = profiles[a.profile];
       const run = this.runs[a.id];
-      if (!p) Object.assign(a, { status: "offline", task: `프로필 '${a.profile}' 없음` });
-      else if (run && run.status === "running") Object.assign(a, { status: "working", task: run.task || "일하는 중" });
-      else if (run && run.status === "needs_approval") Object.assign(a, { status: "needs_approval", task: run.task || "승인이 필요해요" });
-      else if (run && run.status === "done" && Date.now() - run.at < DONE_HOLD_MS) Object.assign(a, { status: "done", task: "방금 끝낸 일 보고" });
+      if (!p) Object.assign(a, { status: "offline", task: t(this.config.lang, "profile_missing", a.profile) });
+      else if (run && run.status === "running") Object.assign(a, { status: "working", task: run.task || t(this.config.lang, "task_working") });
+      else if (run && run.status === "needs_approval") Object.assign(a, { status: "needs_approval", task: run.task || t(this.config.lang, "task_approval") });
+      else if (run && run.status === "done" && Date.now() - run.at < DONE_HOLD_MS) Object.assign(a, { status: "done", task: t(this.config.lang, "task_done_report") });
       else if (p.gateway === "running") Object.assign(a, { status: "idle", task: "" });
-      else Object.assign(a, { status: "offline", task: "게이트웨이 꺼짐" });
+      else Object.assign(a, { status: "offline", task: t(this.config.lang, "task_gateway_stopped") });
     }
   }
 
@@ -120,7 +124,7 @@ class HermesOffice {
       this.state.connected = true;
     } catch (e) {
       this.state.connected = false;
-      notes.push("hermes 명령을 찾지 못했어요. 헤르메스가 이 컴퓨터에 설치돼 있는지 확인해 주세요.");
+      notes.push(t(this.config.lang, "note_no_hermes"));
     }
 
     if (this.state.connected) this.syncAgents(profiles);
@@ -136,7 +140,7 @@ class HermesOffice {
         .filter((t) => KANBAN_STATUS[t.status])
         .map((t) => ({ id: t.id, title: t.title, status: KANBAN_STATUS[t.status], assignee: byProfile[t.assignee] || null, assigneeProfile: t.assignee }));
     } catch (e) {
-      notes.push("칸반을 읽지 못했어요.");
+      notes.push(t(this.config.lang, "note_no_kanban"));
     }
 
     for (const a of this.config.agents) {
@@ -149,8 +153,8 @@ class HermesOffice {
       }
     }
 
-    if (this.missing?.length) notes.push(`설정 파일에 있지만 헤르메스에 없는 프로필은 빼고 보여 줘요: ${this.missing.join(", ")}`);
-    if (!process.env.HERMES_API_KEY) notes.push("말 걸기는 API 서버 키가 있어야 해요. README의 '말 걸기 켜기'를 따라 해 주세요.");
+    if (this.missing?.length) notes.push(t(this.config.lang, "note_missing_profiles", this.missing.join(", ")));
+    if (!process.env.HERMES_API_KEY) notes.push(t(this.config.lang, "note_need_api_key"));
     this.state.notes = notes;
     this.emit();
   }
@@ -165,7 +169,7 @@ class HermesOffice {
     const listed = raw.filter((a) => names.includes(a.profile));
     const known = new Set(listed.map((a) => a.profile));
     const added = this.config.autoAddProfiles === false ? [] : names.filter((p) => !known.has(p))
-      .map((p) => ({ id: `profile-${p}`, name: p, team: "헤르메스 프로필", profile: p }));
+      .map((p) => ({ id: `profile-${p}`, name: p, team: t(this.config.lang, "team_hermes_profile"), profile: p }));
     const next = [...listed, ...added].map((a) => JSON.parse(JSON.stringify(a)));
     const sig = next.map((a) => a.id).join(",");
     this.missing = raw.filter((a) => !names.includes(a.profile)).map((a) => a.profile);
@@ -176,7 +180,7 @@ class HermesOffice {
     layoutAgents(this.config);
     const prev = Object.fromEntries(this.state.agents.map((a) => [a.id, a]));
     this.state.agents = this.config.agents.map((a) => ({
-      ...(prev[a.id] || { status: "offline", task: "확인 중", location: "desk" }),
+      ...(prev[a.id] || { status: "offline", task: t(this.config.lang, "task_checking"), location: "desk" }),
       id: a.id, name: a.name, team: a.team, animal: a.animal, profile: a.profile,
     }));
   }
@@ -201,13 +205,13 @@ class HermesOffice {
   }
 
   showMeeting(topic, members, count) {
-    this.state.meeting = { active: true, topic: `${topic} · 할 일 ${count}개로 나누는 중`, members };
+    this.state.meeting = { active: true, topic: t(this.config.lang, "meeting_decompose_topic", topic, count), members };
     for (const a of this.state.agents) a.location = members.includes(a.id) ? "meeting" : "desk";
     clearTimeout(this.meetingTimer);
     this.meetingTimer = setTimeout(() => {
       this.state.meeting = { active: false, topic: "", members: [] };
       for (const a of this.state.agents) a.location = "desk";
-      this.state.feed.unshift({ agentId: members[0], text: `「${topic}」을 할 일 ${count}개로 나눠 맡겼어요.`, ts: Date.now() });
+      this.state.feed.unshift({ agentId: members[0], text: t(this.config.lang, "feed_decompose", topic, count), ts: Date.now() });
       this.emit();
     }, MEETING_MS);
   }
@@ -220,7 +224,7 @@ class HermesOffice {
     const cfg = this.config.agents.find((a) => a.id === agentId);
     if (!cfg) throw new Error("unknown agent");
     const key = apiKeyFor(cfg.profile);
-    if (!key) throw new Error("이 봇에게 말을 걸려면 API 서버 키가 필요해요. README의 '말 걸기 켜기'를 봐 주세요.");
+    if (!key) throw new Error(t(this.config.lang, "err_need_api_key"));
 
     this.pushChat(agentId, { role: "user", text });
     this.emit();
@@ -229,14 +233,14 @@ class HermesOffice {
       headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
       body: JSON.stringify({ input: text, session_id: this.sessionIdFor(agentId) }),
     });
-    if (!res.ok) throw new Error(`헤르메스가 요청을 받지 않았어요 (HTTP ${res.status})`);
+    if (!res.ok) throw new Error(t(this.config.lang, "err_hermes_rejected", res.status));
     const { run_id: runId } = await res.json();
     this.runs[agentId] = { runId, status: "running", task: text.slice(0, 30), at: Date.now() };
     this.applyRuns();
     this.emit();
     this.refresh().catch(() => {});
     this.follow(agentId, cfg.profile, runId, key).catch((e) => {
-      this.pushChat(agentId, { role: "system", text: `진행 상황을 받지 못했어요: ${e.message}` });
+      this.pushChat(agentId, { role: "system", text: t(this.config.lang, "chat_progress_failed", e.message) });
       this.emit();
     });
     return { ok: true, runId };
@@ -265,14 +269,14 @@ class HermesOffice {
         try { ev = JSON.parse(line.slice(5).trim()); } catch { continue; }
         const run = this.runs[agentId];
         if (ev.event === "message.delta") answer += ev.delta || "";
-        if (ev.event === "tool.started") { run.task = `${ev.tool || "도구"} 사용 중`; this.applyRuns(); this.emit(); await this.refresh(); }
+        if (ev.event === "tool.started") { run.task = t(this.config.lang, "task_using_tool", ev.tool || "tool"); this.applyRuns(); this.emit(); await this.refresh(); }
         if (ev.event === "approval.request") {
-          Object.assign(run, { status: "needs_approval", task: ev.description || ev.command || "승인이 필요해요", choices: ev.choices, requestId: ev.request_id });
+          Object.assign(run, { status: "needs_approval", task: ev.description || ev.command || t(this.config.lang, "task_approval"), choices: ev.choices, requestId: ev.request_id });
           this.applyRuns(); this.emit(); await this.refresh();
         }
         if (ev.event === "approval.responded") { run.status = "running"; this.applyRuns(); this.emit(); await this.refresh(); }
         if (ev.event === "run.completed") {
-          const text = ev.output || answer || "(빈 답변)";
+          const text = ev.output || answer || t(this.config.lang, "chat_empty_reply");
           Object.assign(run, { status: "done", at: Date.now() });
           this.pushChat(agentId, { role: "agent", text });
           this.state.feed.unshift({ agentId, text: text.slice(0, 140), ts: Date.now() });
@@ -281,7 +285,7 @@ class HermesOffice {
         }
         if (ev.event === "run.failed" || ev.event === "run.cancelled") {
           Object.assign(run, { status: "idle" });
-          this.pushChat(agentId, { role: "system", text: ev.error || "작업이 멈췄어요." });
+          this.pushChat(agentId, { role: "system", text: ev.error || t(this.config.lang, "chat_task_stopped") });
           this.applyRuns(); this.emit(); await this.refresh();
           return;
         }
@@ -298,14 +302,14 @@ class HermesOffice {
       headers: { authorization: `Bearer ${apiKeyFor(cfg.profile)}`, "content-type": "application/json" },
       body: JSON.stringify({ choice: choice === "deny" ? "deny" : "once", request_id: run.requestId }),
     });
-    this.pushChat(agentId, { role: "user", text: choice === "deny" ? "하지 마세요" : "진행해 주세요" });
+    this.pushChat(agentId, { role: "user", text: choice === "deny" ? t(this.config.lang, "chat_deny") : t(this.config.lang, "chat_approve") });
     return { ok: res.ok };
   }
 
   startMeeting() {
     // Hermes splits work across profiles with `hermes kanban decompose <task>`.
     // The office does not run it on its own; it only shows the result on the board.
-    throw new Error("헤르메스 모드에서는 칸반 할 일을 `hermes kanban decompose <할 일 id>` 로 나누면 회의 장면이 보여요.");
+    throw new Error(t(this.config.lang, "err_meeting_hint"));
   }
 
   scene() {

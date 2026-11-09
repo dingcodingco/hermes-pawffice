@@ -2,6 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert");
 const { parseProfiles, parseSkills } = require("../server/hermes");
 const { layoutAgents } = require("../server/layout");
+const { t } = require("../server/i18n");
 
 test("parseProfiles reads names with one or more spaces after them", () => {
   const text = [
@@ -33,4 +34,11 @@ test("layoutAgents gives free animals and seats, then opens building 2", () => {
   assert.strictEqual(new Set(animals).size, 3);
   assert.deepStrictEqual(config.agents.map((a) => a.page), [1, 1, 2]);
   assert.strictEqual(config.pages, 2);
+});
+
+test("i18n string table returns localized and formatted strings", () => {
+  assert.strictEqual(t("ko", "msg_empty"), "메시지가 비어 있어요.");
+  assert.strictEqual(t("en", "msg_empty"), "Message cannot be empty.");
+  assert.strictEqual(t("en", "meeting_decompose_topic", "Launch", 3), "Launch · Splitting into 3 tasks");
+  assert.strictEqual(t("unknown", "msg_empty"), "메시지가 비어 있어요.");
 });
