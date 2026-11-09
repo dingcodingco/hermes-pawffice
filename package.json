@@ -1,0 +1,41 @@
+{
+  "name": "hermes-pawffice",
+  "version": "0.1.0",
+  "description": "A cute pixel office that shows your Hermes Agent profiles as animal coworkers.",
+  "keywords": [
+    "hermes-agent",
+    "ai-agents",
+    "pixel-art",
+    "dashboard",
+    "virtual-office",
+    "nous-research"
+  ],
+  "homepage": "https://github.com/dingcodingco/hermes-pawffice#readme",
+  "bugs": {
+    "url": "https://github.com/dingcodingco/hermes-pawffice/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dingcodingco/hermes-pawffice.git"
+  },
+  "license": "MIT",
+  "bin": {
+    "pawffice": "bin/pawffice.js"
+  },
+  "main": "server/index.js",
+  "files": [
+    "bin",
+    "server",
+    "public",
+    "office.config.json",
+    "examples"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "demo": "node bin/pawffice.js",
+    "hermes": "node bin/pawffice.js --hermes",
+    "test": "node --test test/*.test.js"
+  }
+}

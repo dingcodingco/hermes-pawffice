@@ -1,0 +1,17 @@
+name: Idea or feature
+description: Suggest something for the office
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like?
+      description: What would it look like in the office, and why would it help?
+    validations:
+      required: true
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Want to build it?
+      options:
+        - label: I'd like to open a PR for this

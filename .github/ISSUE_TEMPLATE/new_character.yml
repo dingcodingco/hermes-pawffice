@@ -1,0 +1,22 @@
+name: New character
+description: Propose a new animal coworker
+labels: [character]
+body:
+  - type: input
+    id: animal
+    attributes:
+      label: Animal and look
+      placeholder: "hedgehog in a yellow raincoat"
+    validations:
+      required: true
+  - type: textarea
+    id: art
+    attributes:
+      label: Sprite sheet
+      description: 5 frames in one row (typing, typing, dozing, hand up, happy), transparent PNG, about 88 px tall. Attach a draft if you have one.
+  - type: checkboxes
+    id: rights
+    attributes:
+      label: Rights
+      options:
+        - label: I made this art (or have the right to share it) and it can be released under MIT

@@ -1,0 +1,29 @@
+{
+  "title": "Pawffice",
+  "agents": [
+    { "id": "hamster", "name": "햄찌", "team": "1인 비즈니스 운영 팀", "animal": "hamster", "profile": "default" },
+    { "id": "shiba", "name": "시바", "team": "영업과 고객 관리 팀", "animal": "shiba", "profile": "sales" },
+    { "id": "penguin", "name": "펭", "team": "콘텐츠 마케팅 팀", "animal": "penguin", "profile": "content" },
+    { "id": "otter", "name": "수달", "team": "리서치 팀", "animal": "otter", "profile": "research" },
+    { "id": "cat", "name": "까망", "team": "비서실", "animal": "cat", "profile": "secretary" }
+  ],
+  "autoAddProfiles": true,
+  "seats": [
+    { "x": 640, "y": 256, "desk": { "type": "desk-laptop", "x": 703 } },
+    { "x": 712, "y": 373, "desk": { "type": "desk-laptop", "x": 779 } },
+    { "x": 638, "y": 491, "desk": { "type": "desk-laptop", "x": 702 } },
+    { "x": 478, "y": 604, "desk": { "type": "desk-monitor", "x": 543 } },
+    { "x": 545, "y": 722, "frontCrop": { "x": 428, "y": 703, "w": 280, "h": 50 } },
+    { "x": 455, "y": 373, "desk": { "type": "desk-laptop", "x": 518 } },
+    { "x": 455, "y": 491, "desk": { "type": "desk-laptop", "x": 518 } },
+    { "x": 455, "y": 256, "desk": { "type": "desk-laptop", "x": 518 } },
+    { "x": 700, "y": 604, "desk": { "type": "desk-monitor", "x": 763 } }
+  ],
+  "meetingSeats": [
+    { "x": 590, "y": 133 }, { "x": 670, "y": 133 }, { "x": 750, "y": 133 }, { "x": 830, "y": 133 }, { "x": 905, "y": 133 }
+  ],
+  "meetingArea": { "x0": 300, "x1": 960, "y": 133 },
+  "interior": { "x0": 300, "x1": 1065 },
+  "view": { "x": 70, "y": 0, "w": 1300, "h": 768 },
+  "lobbyBoard": { "x": 738, "y": 632, "w": 228, "h": 88 }
+}

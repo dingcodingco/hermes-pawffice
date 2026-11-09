@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>Pawffice cover</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css" />
+<style>
+  :root { --ink: #2f2b28; --paper: #fbf7f0; --sage: #7f9a7a; --sage-d: #556b52; --navy: #3d4a60; --terra: #c46a45; --gold: #d9a441; --muted: #7d746a; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1280px; height: 640px; overflow: hidden; background: #efe7da; font-family: "Galmuri11", sans-serif; color: var(--ink); }
+  .scene { position: relative; width: 1280px; height: 640px; overflow: hidden; }
+  .bg { position: absolute; left: -48px; top: -70px; width: 1376px; height: 768px; image-rendering: pixelated; }
+  .wash { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(239,231,218,.55) 0%, rgba(239,231,218,.88) 46%, rgba(239,231,218,.96) 100%); }
+  .title { position: absolute; left: 0; right: 0; top: 54px; text-align: center; }
+  .title .eyebrow { display: inline-block; font-size: 22px; padding: 6px 14px; background: var(--paper); border: 3px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); }
+  .title h1 { font-family: "Galmuri11", sans-serif; font-weight: 700; font-size: 132px; letter-spacing: 4px; line-height: 1; margin-top: 22px;
+    color: var(--paper); text-shadow: 6px 0 0 var(--ink), -6px 0 0 var(--ink), 0 6px 0 var(--ink), 0 -6px 0 var(--ink), 6px 6px 0 var(--ink), -6px 6px 0 var(--ink), 6px -6px 0 var(--ink), -6px -6px 0 var(--ink), 12px 12px 0 var(--sage-d); }
+  .title p { margin-top: 26px; font-size: 30px; }
+  .title p b { font-weight: 400; color: var(--sage-d); }
+  .floor { position: absolute; left: 0; right: 0; top: 590px; height: 50px; background: #4a4541; border-top: 6px solid #2f2b28; }
+  .floor::after { content: ""; position: absolute; left: 0; right: 0; top: 10px; height: 4px; background: #5c5650; }
+  .row { position: absolute; left: 0; right: 0; bottom: 50px; display: flex; justify-content: center; align-items: flex-end; gap: 12px; }
+  .bot { position: relative; transform-origin: 50% 100%; }
+  .bot .body { image-rendering: pixelated; background-repeat: no-repeat; }
+  .bubble { position: absolute; left: 50%; top: -34px; transform: translateX(-50%); width: 26px; height: 26px; display: grid; place-items: center;
+    font-size: 16px; color: #fff; border: 3px solid var(--ink); }
+  .tag { position: absolute; right: 26px; bottom: 60px; font-size: 18px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="scene">
+  <img class="bg" src="../assets/office-day.webp" alt="" />
+  <div class="wash"></div>
+  <div class="title">
+    <span class="eyebrow">for Hermes Agent · open source</span>
+    <h1 id="name">PAWFFICE</h1>
+    <p>내 AI 봇들이 <b>귀여운 동물 직원</b>으로 일하는 픽셀 사무실</p>
+  </div>
+  <div class="floor"></div>
+  <div class="row" id="row"></div>
+</div>
+<script>
+  const q = new URLSearchParams(location.search);
+  if (q.get("name")) document.getElementById("name").textContent = q.get("name");
+  const S = Number(q.get("scale") || 1.5);
+  // name, cell width, height, frame, status bubble
+  const BOTS = [
+    ["fox", 66, 88, 0, "working"], ["rabbit", 45, 99, 2], ["capybara", 47, 88, 4, "done"], ["shiba", 58, 88, 3, "approval"],
+    ["penguin", 56, 88, 1, "working"], ["cat", 50, 88, 0], ["hamster", 57, 88, 4, "done"], ["otter", 58, 88, 0, "working"],
+    ["redpanda", 54, 88, 2, "idle"], ["bear", 64, 88, 1], ["raccoon", 50, 88, 3], ["frog", 50, 88, 0, "working"], ["koala", 44, 88, 2],
+  ];
+  const ICO = { working: ["…", "#3d4a60"], done: ["✓", "#556b52"], approval: ["!", "#c46a45"], idle: ["z", "#9a9187"] };
+  const html = (n, w, h, f, s, pop) => `
+    <div class="bot" style="width:${w * S}px;height:${h * S}px">
+      ${s ? `<span class="bubble" style="background:${ICO[s][1]};${pop ? `transform:translateX(-50%) scale(${pop})` : ""}">${ICO[s][0]}</span>` : ""}
+      <div class="body" style="width:${w * S}px;height:${h * S}px;background-image:url(../assets/sprites/${n}.png);background-size:${w * 5 * S}px ${h * S}px;background-position:-${f * w * S}px 0"></div>
+    </div>`;
+  const row = document.getElementById("row");
+  row.innerHTML = BOTS.map(([n, w, h, f, s]) => html(n, w, h, f, s)).join("");
+
+  // ?anim=1: window.setT(ms) draws a seamless 4 s loop. Sprite frames: 0/1 typing, 2 sleeping, 3 hand up, 4 happy.
+  const P = 4000;
+  window.setT = (t) => {
+    row.innerHTML = BOTS.map(([n, w, h, f, s], i) => {
+      if (s === "approval") return html(n, w, h, 3, s, 1 + 0.12 * Math.max(0, Math.sin((t / P) * 4 * Math.PI)));
+      if (s === "idle") return html(n, w, h, 2, s);
+      if (!s && i % 3 === 0) return html(n, w, h, 2, "idle");
+      const u = (t + i * 290) % P;
+      if (u < 2600) return html(n, w, h, Math.floor(u / 160) % 2, "working");
+      const k = (u - 2600) / 1400;
+      return html(n, w, h, 4, "done", k < 0.12 ? 0.6 + k * 5 : 1);
+    }).join("");
+  };
+  if (q.get("anim")) window.setT(0);
+</script>
+</body>
+</html>
