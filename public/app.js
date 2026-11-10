@@ -416,10 +416,10 @@ function renderChat(p, notes) {
 function renderKanban(p, notes) {
   const cols = COLS.map((k) => {
     const label = t(`col_${k}`);
-    const cards = state.kanban.filter((t) => t.status === k);
-    return `<div class="col ${k}"><h3>${label}<span>${cards.length}</span></h3>${cards.map((t) => {
-      const a = t.assignee && agentCfg(t.assignee);
-      return `<div class="card">${esc(t.title)}<div class="by">${a ? `<i style="${face(a.animal, 18)}"></i>${esc(a.name)}` : esc(t.assigneeProfile || t("unassigned"))}</div></div>`;
+    const cards = state.kanban.filter((card) => card.status === k);
+    return `<div class="col ${k}"><h3>${label}<span>${cards.length}</span></h3>${cards.map((card) => {
+      const a = card.assignee && agentCfg(card.assignee);
+      return `<div class="card">${esc(card.title)}<div class="by">${a ? `<i style="${face(a.animal, 18)}"></i>${esc(a.name)}` : esc(card.assigneeProfile || t("unassigned"))}</div></div>`;
     }).join("")}</div>`;
   }).join("");
   p.innerHTML = `

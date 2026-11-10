@@ -87,6 +87,7 @@ node bin/pawffice.js --hermes
 - `animal` 을 비우면 남은 캐릭터가 순서대로 배정돼요.
 - 여기 적지 않은 프로필도 자동으로 들어와요. 끄려면 `"autoAddProfiles": false` 를 넣어요.
 - 여기 적었지만 헤르메스에 없는 프로필은 빼고 보여 주고, 화면에 안내가 떠요.
+- 영어 UI로 바꾸려면 `office.config.json`에 `"lang": "en"`을 추가해요. 기본값은 한국어(`"ko"`)예요.
 
 캐릭터는 13종이에요: hamster, shiba, penguin, otter, cat, capybara, redpanda, rabbit, fox, bear, raccoon, frog, koala.
 

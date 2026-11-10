@@ -1,6 +1,5 @@
 {
   "title": "Pawffice",
-  "lang": "en",
   "agents": [
     { "id": "hamster", "name": "햄찌", "team": "1인 비즈니스 운영 팀", "animal": "hamster", "profile": "default" },
     { "id": "shiba", "name": "시바", "team": "영업과 고객 관리 팀", "animal": "shiba", "profile": "sales" },

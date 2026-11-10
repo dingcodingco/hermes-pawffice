@@ -100,6 +100,7 @@ Edit `agents` in `office.config.json`, one line per profile:
 - Leave out `animal` and the next free character is assigned.
 - Profiles you did not list are added automatically. Turn this off with `"autoAddProfiles": false`.
 - Listed profiles that do not exist in Hermes are hidden, with a note on screen.
+- Add `"lang": "en"` to `office.config.json` to switch the UI to English. The default is Korean (`"ko"`).
 
 13 characters: hamster, shiba, penguin, otter, cat, capybara, redpanda, rabbit, fox, bear, raccoon, frog, koala.
 

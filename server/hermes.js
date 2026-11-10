@@ -20,10 +20,7 @@ const MEETING_MS = Number(process.env.OFFICE_MEETING_MS || 12000);
 
 function cli(args, timeout = 30000) {
   return new Promise((resolve, reject) => {
-    const isJs = HERMES_BIN.endsWith(".js");
-    const bin = isJs ? process.execPath : HERMES_BIN;
-    const finalArgs = isJs ? [HERMES_BIN, ...args] : args;
-    execFile(bin, finalArgs, { timeout, maxBuffer: 8 * 1024 * 1024 }, (err, stdout, stderr) => {
+    execFile(HERMES_BIN, args, { timeout, maxBuffer: 8 * 1024 * 1024 }, (err, stdout, stderr) => {
       if (err) return reject(new Error(`hermes ${args.join(" ")} failed: ${(stderr || err.message).trim().slice(0, 300)}`));
       resolve(stdout);
     });
