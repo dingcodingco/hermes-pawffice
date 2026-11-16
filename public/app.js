@@ -1,18 +1,115 @@
 // Front end: draws the office and the side panel from /api/events.
 const FRAMES = 5; // 0,1 typing · 2 sleepy · 3 raise hand · 4 done
-const STATUS = {
-  working: { ico: "…", label: "일하는 중" },
-  needs_approval: { ico: "!", label: "승인 필요" },
-  done: { ico: "✓", label: "완료" },
-  idle: { ico: "z", label: "대기" },
-  offline: { ico: "–", label: "꺼짐" },
+
+const I18N = {
+  ko: {
+    title: "Pawffice · Hermes 픽셀 사무실",
+    demo_mode: "데모 · 예시 데이터",
+    hermes_connected: "헤르메스 연결됨",
+    hermes_disconnected: "헤르메스 연결 안 됨",
+    feed: "보고함",
+    kanban: "칸반",
+    skills: "스킬·연결",
+    meeting_btn: "회의 열기",
+    board_title: "칸반 보기",
+    building_page: (n) => `${n}관`,
+    status_working: "일하는 중",
+    status_needs_approval: "승인 필요",
+    status_done: "완료",
+    status_idle: "대기",
+    status_offline: "꺼짐",
+    col_todo: "할 일",
+    col_running: "진행 중",
+    col_blocked: "막힘",
+    col_done: "완료",
+    just_now: "방금",
+    m_ago: (m) => `${m}분 전`,
+    h_ago: (h) => `${Math.round(h)}시간 전`,
+    demo_reply: "데모 응답",
+    approval_needed: "승인이 필요해요",
+    btn_approve: "진행해 주세요",
+    btn_deny: "하지 마세요",
+    chat_empty: (name) => `${name}에게 할 일을 말해 보세요.`,
+    chat_placeholder: (name) => `${name}에게 말 걸기`,
+    btn_send: "보내기",
+    kanban_title: "칸반 보드",
+    kanban_desc: "누가 무슨 일을 맡았는지 한눈에 봐요.",
+    unassigned: "담당 없음",
+    skills_title: "스킬·연결",
+    skills_desc: "직원마다 챙겨 준 스킬과 연결 도구예요.",
+    label_skills: "스킬",
+    label_tools: "연결 도구",
+    none: "없음",
+    feed_title: "보고함",
+    feed_desc: "직원들이 끝낸 일을 여기로 보고해요. 캐릭터를 누르면 말을 걸 수 있어요.",
+    feed_meeting_title: "회의 중",
+    feed_meeting_desc: (topic) => `${topic} · 끝나면 칸반에 할 일이 생겨요.`,
+    feed_empty: "아직 보고가 없어요.",
+    meeting_sign: (topic, count) => `회의 중 · ${topic} (${count}명)`,
+  },
+  en: {
+    title: "Pawffice · Hermes Pixel Office",
+    demo_mode: "Demo · Sample Data",
+    hermes_connected: "Hermes Connected",
+    hermes_disconnected: "Hermes Disconnected",
+    feed: "Feed",
+    kanban: "Kanban",
+    skills: "Skills",
+    meeting_btn: "Start Meeting",
+    board_title: "View Kanban",
+    building_page: (n) => `Bldg ${n}`,
+    status_working: "Working",
+    status_needs_approval: "Needs approval",
+    status_done: "Done",
+    status_idle: "Idle",
+    status_offline: "Offline",
+    col_todo: "To Do",
+    col_running: "In Progress",
+    col_blocked: "Blocked",
+    col_done: "Done",
+    just_now: "just now",
+    m_ago: (m) => `${m}m ago`,
+    h_ago: (h) => `${Math.round(h)}h ago`,
+    demo_reply: "Demo response",
+    approval_needed: "Approval needed",
+    btn_approve: "Approve",
+    btn_deny: "Deny",
+    chat_empty: (name) => `Ask ${name} to do something.`,
+    chat_placeholder: (name) => `Message ${name}`,
+    btn_send: "Send",
+    kanban_title: "Kanban Board",
+    kanban_desc: "See at a glance who is doing what.",
+    unassigned: "Unassigned",
+    skills_title: "Skills & Tools",
+    skills_desc: "Skills and tools assigned to each agent.",
+    label_skills: "Skills",
+    label_tools: "Connected Tools",
+    none: "None",
+    feed_title: "Feed",
+    feed_desc: "Completed work is reported here. Click a character to chat.",
+    feed_meeting_title: "In Meeting",
+    feed_meeting_desc: (topic) => `${topic} · When finished, tasks will appear on Kanban.`,
+    feed_empty: "No reports yet.",
+    meeting_sign: (topic, count) => `Meeting · ${topic} (${count} members)`,
+  },
 };
-const COLS = [
-  ["todo", "할 일"],
-  ["running", "진행 중"],
-  ["blocked", "막힘"],
-  ["done", "완료"],
-];
+
+function t(key, ...args) {
+  const lang = config?.lang === "en" ? "en" : "ko";
+  const val = I18N[lang]?.[key] ?? I18N.ko[key] ?? key;
+  return typeof val === "function" ? val(...args) : val;
+}
+
+const STATUS_ICONS = {
+  working: "…",
+  needs_approval: "!",
+  done: "✓",
+  idle: "z",
+  offline: "–",
+};
+const statusLabel = (k) => t(`status_${k}`);
+
+const COLS = ["todo", "running", "blocked", "done"];
 
 const $ = (s, el = document) => el.querySelector(s);
 const params = new URLSearchParams(location.search);
@@ -28,8 +125,23 @@ const agentCfg = (id) => config.agents.find((a) => a.id === id);
 const agentState = (id) => state.agents.find((a) => a.id === id);
 const ago = (ts) => {
   const m = Math.round((Date.now() - ts) / 60000);
-  return m < 1 ? "방금" : m < 60 ? `${m}분 전` : `${Math.round(m / 60)}시간 전`;
+  return m < 1 ? t("just_now") : m < 60 ? t("m_ago", m) : t("h_ago", m / 60);
 };
+
+function applyI18n() {
+  document.documentElement.lang = config?.lang || "ko";
+  document.title = t("title");
+  const feedBtn = $("[data-panel='feed']");
+  if (feedBtn) feedBtn.textContent = t("feed");
+  const kanbanBtn = $("[data-panel='kanban']");
+  if (kanbanBtn) kanbanBtn.textContent = t("kanban");
+  const skillsBtn = $("[data-panel='skills']");
+  if (skillsBtn) skillsBtn.textContent = t("skills");
+  const meetingBtn = $("#meetingBtn");
+  if (meetingBtn) meetingBtn.textContent = t("meeting_btn");
+  const board = $("#board");
+  if (board) board.title = t("board_title");
+}
 
 function loadImage(src) {
   return new Promise((resolve) => {
@@ -69,6 +181,7 @@ async function boot() {
 
 async function loadConfig() {
   config = await (await fetch("/api/config")).json();
+  applyI18n();
   await Promise.all(config.agents.map(async (a) => {
     if (sprites[a.animal]) return;
     const img = await loadImage(`assets/sprites/${a.animal}.png`);
@@ -79,12 +192,12 @@ async function loadConfig() {
   drawFurniture();
 }
 
-// "1관 2관 …" buttons appear only when the bots do not fit in one building.
+// Building tabs appear only when the bots do not fit in one building.
 function drawPages() {
   const box = $("#pages");
   const n = config.pages || 1;
   box.hidden = n < 2;
-  box.innerHTML = Array.from({ length: n }, (_, i) => `<button data-page="${i + 1}" class="${i + 1 === page ? "on" : ""}">${i + 1}관</button>`).join("");
+  box.innerHTML = Array.from({ length: n }, (_, i) => `<button data-page="${i + 1}" class="${i + 1 === page ? "on" : ""}">${t("building_page", i + 1)}</button>`).join("");
   box.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
     page = Number(b.dataset.page);
     drawPages();
@@ -157,7 +270,7 @@ function seatOf(a, s) {
 function render() {
   $("#title").textContent = state.title;
   const badge = $("#mode");
-  badge.textContent = state.mode === "demo" ? "데모 · 예시 데이터" : state.connected ? "헤르메스 연결됨" : "헤르메스 연결 안 됨";
+  badge.textContent = state.mode === "demo" ? t("demo_mode") : state.connected ? t("hermes_connected") : t("hermes_disconnected");
   badge.classList.toggle("live", state.mode === "hermes" && state.connected);
 
   const layer = $("#agents");
@@ -180,8 +293,8 @@ function render() {
     Object.assign(body.style, { width: `${sp.w}px`, height: `${sp.h}px`, backgroundImage: `url(assets/sprites/${a.animal}.png)` });
     const b = el.querySelector(".bubble");
     b.className = `bubble s-${s.status}`;
-    b.querySelector(".ico").textContent = STATUS[s.status].ico;
-    const text = s.task || STATUS[s.status].label;
+    b.querySelector(".ico").textContent = STATUS_ICONS[s.status] || "–";
+    const text = s.task || statusLabel(s.status);
     b.querySelector(".txt").innerHTML = `${esc(a.name)} <b>·</b> ${esc(text.length > 16 ? `${text.slice(0, 15)}…` : text)}`;
     el.querySelector(".tag").textContent = `${a.name} · ${a.team}`;
   }
@@ -199,7 +312,7 @@ function render() {
 
   const sign = $("#meetingSign");
   sign.hidden = !state.meeting.active;
-  sign.textContent = state.meeting.active ? `회의 중 · ${state.meeting.topic} (${state.meeting.members.length}명)` : "";
+  sign.textContent = state.meeting.active ? t("meeting_sign", state.meeting.topic, state.meeting.members.length) : "";
   animate();
   renderPanel();
 }
@@ -268,19 +381,19 @@ function renderChat(p, notes) {
   const a = agentCfg(panel.agentId);
   const s = agentState(a.id);
   const msgs = (state.chats[a.id] || []).map((m) =>
-    `<div class="msg msg-${m.role}">${esc(m.text)}${m.demo ? '<span class="demo">데모 응답</span>' : ""}</div>`).join("");
+    `<div class="msg msg-${m.role}">${esc(m.text)}${m.demo ? `<span class="demo">${t("demo_reply")}</span>` : ""}</div>`).join("");
   const approval = s.status === "needs_approval" ? `
-    <div class="approve"><strong>승인이 필요해요</strong><br>${esc(s.task)}
-      <div class="row"><button class="btn" data-approve="once">진행해 주세요</button><button class="btn ghost" data-approve="deny">하지 마세요</button></div>
+    <div class="approve"><strong>${t("approval_needed")}</strong><br>${esc(s.task)}
+      <div class="row"><button class="btn" data-approve="once">${t("btn_approve")}</button><button class="btn ghost" data-approve="deny">${t("btn_deny")}</button></div>
     </div>` : "";
   const old = p.querySelector(".composer input");
   const keep = old?.value || "";
   const focused = old && document.activeElement === old ? [old.selectionStart, old.selectionEnd] : null;
   p.innerHTML = `
     <div class="p-head"><div class="who"><span class="face" style="${face(a.animal)}"></span>
-      <div><h2>${esc(a.name)}</h2><p>${esc(a.team)} · ${STATUS[s.status].label}${s.task ? ` · ${esc(s.task)}` : ""}</p></div></div></div>
-    <div class="p-body">${notes}${approval}${msgs || `<p style="color:var(--muted);font-size:13px">${esc(a.name)}에게 할 일을 말해 보세요.</p>`}</div>
-    <form class="composer"><input placeholder="${esc(a.name)}에게 말 걸기" value="${esc(keep)}" /><button>보내기</button></form>`;
+      <div><h2>${esc(a.name)}</h2><p>${esc(a.team)} · ${statusLabel(s.status)}${s.task ? ` · ${esc(s.task)}` : ""}</p></div></div></div>
+    <div class="p-body">${notes}${approval}${msgs || `<p style="color:var(--muted);font-size:13px">${esc(t("chat_empty", a.name))}</p>`}</div>
+    <form class="composer"><input placeholder="${esc(t("chat_placeholder", a.name))}" value="${esc(keep)}" /><button>${t("btn_send")}</button></form>`;
   const body = p.querySelector(".p-body");
   body.scrollTop = body.scrollHeight;
   if (focused) {
@@ -301,15 +414,16 @@ function renderChat(p, notes) {
 }
 
 function renderKanban(p, notes) {
-  const cols = COLS.map(([k, label]) => {
-    const cards = state.kanban.filter((t) => t.status === k);
-    return `<div class="col ${k}"><h3>${label}<span>${cards.length}</span></h3>${cards.map((t) => {
-      const a = t.assignee && agentCfg(t.assignee);
-      return `<div class="card">${esc(t.title)}<div class="by">${a ? `<i style="${face(a.animal, 18)}"></i>${esc(a.name)}` : esc(t.assigneeProfile || "담당 없음")}</div></div>`;
+  const cols = COLS.map((k) => {
+    const label = t(`col_${k}`);
+    const cards = state.kanban.filter((card) => card.status === k);
+    return `<div class="col ${k}"><h3>${label}<span>${cards.length}</span></h3>${cards.map((card) => {
+      const a = card.assignee && agentCfg(card.assignee);
+      return `<div class="card">${esc(card.title)}<div class="by">${a ? `<i style="${face(a.animal, 18)}"></i>${esc(a.name)}` : esc(card.assigneeProfile || t("unassigned"))}</div></div>`;
     }).join("")}</div>`;
   }).join("");
   p.innerHTML = `
-    <div class="p-head"><h2>칸반 보드</h2><p>누가 무슨 일을 맡았는지 한눈에 봐요.</p></div>
+    <div class="p-head"><h2>${t("kanban_title")}</h2><p>${t("kanban_desc")}</p></div>
     <div class="p-body">${notes}<div class="cols">${cols}</div></div>`;
 }
 
@@ -317,12 +431,12 @@ function renderSkills(p, notes) {
   const list = config.agents.map((a) => {
     const sk = state.skills[a.id] || { skills: [], connectors: [] };
     return `<div class="staff"><div class="who"><span class="face" style="${face(a.animal)}"></span><div><strong>${esc(a.name)}</strong><span>${esc(a.team)}</span></div></div>
-      <div class="label">스킬</div><div class="chips">${sk.skills.map((x) => `<span class="chip">${esc(x)}</span>`).join("") || '<span class="chip">없음</span>'}</div>
-      ${sk.connectors.length ? `<div class="label">연결 도구</div><div class="chips">${sk.connectors.map((x) => `<span class="chip conn">${esc(x)}</span>`).join("")}</div>` : ""}
+      <div class="label">${t("label_skills")}</div><div class="chips">${sk.skills.map((x) => `<span class="chip">${esc(x)}</span>`).join("") || `<span class="chip">${t("none")}</span>`}</div>
+      ${sk.connectors.length ? `<div class="label">${t("label_tools")}</div><div class="chips">${sk.connectors.map((x) => `<span class="chip conn">${esc(x)}</span>`).join("")}</div>` : ""}
     </div>`;
   }).join("");
   p.innerHTML = `
-    <div class="p-head"><h2>스킬·연결</h2><p>직원마다 챙겨 준 스킬과 연결 도구예요.</p></div>
+    <div class="p-head"><h2>${t("skills_title")}</h2><p>${t("skills_desc")}</p></div>
     <div class="p-body">${notes}${list}</div>`;
 }
 
@@ -333,8 +447,8 @@ function renderFeed(p, notes) {
       <div><strong>${esc(a.name)}</strong> <time>${ago(f.ts)}</time>${esc(f.text)}</div></div>`;
   }).join("");
   p.innerHTML = `
-    <div class="p-head"><h2>${state.meeting.active ? "회의 중" : "보고함"}</h2><p>${state.meeting.active ? esc(state.meeting.topic) + " · 끝나면 칸반에 할 일이 생겨요." : "직원들이 끝낸 일을 여기로 보고해요. 캐릭터를 누르면 말을 걸 수 있어요."}</p></div>
-    <div class="p-body">${notes}${items || '<p style="color:var(--muted);font-size:13px">아직 보고가 없어요.</p>'}</div>`;
+    <div class="p-head"><h2>${state.meeting.active ? t("feed_meeting_title") : t("feed_title")}</h2><p>${state.meeting.active ? esc(t("feed_meeting_desc", state.meeting.topic)) : t("feed_desc")}</p></div>
+    <div class="p-body">${notes}${items || `<p style="color:var(--muted);font-size:13px">${t("feed_empty")}</p>`}</div>`;
 }
 
 boot();

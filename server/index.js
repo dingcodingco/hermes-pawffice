@@ -5,6 +5,7 @@ const path = require("node:path");
 const { DemoOffice } = require("./demo");
 const { HermesOffice } = require("./hermes");
 const { layoutAgents } = require("./layout");
+const { t } = require("./i18n");
 
 const ROOT = path.resolve(__dirname, "..");
 const PUBLIC = path.join(ROOT, "public");
@@ -22,6 +23,7 @@ function loadConfig() {
   const local = path.join(process.cwd(), "office.config.json");
   const file = fs.existsSync(local) ? local : path.join(ROOT, "office.config.json");
   const config = JSON.parse(fs.readFileSync(file, "utf8"));
+  config.lang = config.lang || "ko";
   config.rawAgents = JSON.parse(JSON.stringify(config.agents)); // before seats are filled in
   return layoutAgents(config);
 }
@@ -62,7 +64,7 @@ function start({ mode = "demo", port = 4300, host = "127.0.0.1" } = {}) {
       }
       if (req.method === "POST" && url.pathname === "/api/chat") {
         const { agentId, text } = await readBody(req);
-        if (!text || !String(text).trim()) return json(res, 400, { error: "메시지가 비어 있어요." });
+        if (!text || !String(text).trim()) return json(res, 400, { error: t(config.lang, "msg_empty") });
         return json(res, 200, await office.chat(agentId, String(text).slice(0, 4000)));
       }
       if (req.method === "POST" && url.pathname === "/api/approve") {
@@ -86,8 +88,9 @@ function start({ mode = "demo", port = 4300, host = "127.0.0.1" } = {}) {
   });
 
   server.listen(port, host, () => {
-    console.log(`\n  ${config.title} — ${mode === "hermes" ? "헤르메스 연결 모드" : "데모 모드"}`);
-    console.log(`  브라우저에서 열기: http://${host === "0.0.0.0" ? "localhost" : host}:${port}\n`);
+    const modeLabel = mode === "hermes" ? t(config.lang, "hermes_mode") : t(config.lang, "demo_mode");
+    console.log(`\n  ${config.title} — ${modeLabel}`);
+    console.log(`  ${t(config.lang, "open_browser")}: http://${host === "0.0.0.0" ? "localhost" : host}:${port}\n`);
   });
   return server;
 }

@@ -2,6 +2,7 @@
 // Every reply is tagged so viewers can tell it is sample data.
 
 const now = () => Date.now();
+const { t } = require("./i18n");
 
 const SKILLS = {
   hamster: {
@@ -107,12 +108,12 @@ class DemoOffice {
     const a = this.agent(agentId);
     if (!a) throw new Error("unknown agent");
     this.pushChat(agentId, { role: "user", text });
-    Object.assign(a, { status: "working", task: "요청 처리 중" });
+    Object.assign(a, { status: "working", task: t(this.config.lang, "task_processing") });
     this.emit();
     setTimeout(() => {
-      const reply = REPLIES[agentId] || "알겠어요. 끝나면 알려 드릴게요.";
+      const reply = REPLIES[agentId] || (this.config.lang === "en" ? "Understood. I will let you know when finished." : "알겠어요. 끝나면 알려 드릴게요.");
       this.pushChat(agentId, { role: "agent", text: reply, demo: true });
-      Object.assign(a, { status: "done", task: "방금 끝낸 일 보고" });
+      Object.assign(a, { status: "done", task: t(this.config.lang, "task_done_report") });
       this.state.feed.unshift({ agentId, text: reply, ts: now() });
       this.emit();
     }, 2600);
@@ -123,15 +124,15 @@ class DemoOffice {
     const a = this.agent(agentId);
     if (!a || a.status !== "needs_approval") return { ok: false };
     const ok = choice !== "deny";
-    Object.assign(a, ok ? { status: "working", task: "답장 보내는 중" } : { status: "idle", task: "" });
-    this.pushChat(agentId, { role: "user", text: ok ? "보내도 돼요" : "보내지 마세요" });
+    Object.assign(a, ok ? { status: "working", task: t(this.config.lang, "task_sending_reply") } : { status: "idle", task: "" });
+    this.pushChat(agentId, { role: "user", text: ok ? t(this.config.lang, "chat_approve") : t(this.config.lang, "chat_deny") });
     this.emit();
     if (ok) {
       setTimeout(() => {
-        Object.assign(a, { status: "done", task: "답장 3건 보냄" });
-        const t = this.state.kanban.find((k) => k.id === "t2");
-        if (t) t.status = "done";
-        this.state.feed.unshift({ agentId, text: "고객 3명에게 답장 보냈어요.", ts: now() });
+        Object.assign(a, { status: "done", task: t(this.config.lang, "task_sent_replies") });
+        const t2 = this.state.kanban.find((k) => k.id === "t2");
+        if (t2) t2.status = "done";
+        this.state.feed.unshift({ agentId, text: t(this.config.lang, "feed_sent_replies"), ts: now() });
         this.emit();
       }, 2000);
     }
@@ -143,7 +144,7 @@ class DemoOffice {
   startMeeting() {
     const members = meetingMembers(this.state.agents);
     this.state.meeting = { active: true, topic: "신제품 출시 준비, 할 일 나누기", members };
-    for (const id of members) Object.assign(this.agent(id), { location: "meeting", status: "working", task: "회의 중" });
+    for (const id of members) Object.assign(this.agent(id), { location: "meeting", status: "working", task: t(this.config.lang, "task_meeting") });
     this.emit();
     setTimeout(() => this.endMeeting(), 6000);
     return { ok: true };
@@ -177,7 +178,7 @@ class DemoOffice {
     if (name === "meeting") {
       const members = meetingMembers(this.state.agents);
       this.state.meeting = { active: true, topic: "신제품 출시 준비, 할 일 나누기", members };
-      for (const id of members) Object.assign(this.agent(id), { location: "meeting", status: "working", task: "회의 중" });
+      for (const id of members) Object.assign(this.agent(id), { location: "meeting", status: "working", task: t(this.config.lang, "task_meeting") });
     }
     this.emit();
     return { ok: true };

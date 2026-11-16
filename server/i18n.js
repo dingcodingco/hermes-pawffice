@@ -1,0 +1,78 @@
+// Server-side string translations for Korean and English.
+const STRINGS = {
+  ko: {
+    msg_empty: "메시지가 비어 있어요.",
+    demo_mode: "데모 모드",
+    hermes_mode: "헤르메스 연결 모드",
+    open_browser: "브라우저에서 열기",
+    task_checking: "확인 중",
+    task_processing: "요청 처리 중",
+    task_working: "일하는 중",
+    task_approval: "승인이 필요해요",
+    task_done_report: "방금 끝낸 일 보고",
+    task_gateway_stopped: "게이트웨이 꺼짐",
+    task_meeting: "회의 중",
+    task_sending_reply: "답장 보내는 중",
+    task_sent_replies: "답장 3건 보냄",
+    chat_approve: "진행해 주세요",
+    chat_deny: "하지 마세요",
+    feed_sent_replies: "고객 3명에게 답장 보냈어요.",
+    note_no_hermes: "hermes 명령을 찾지 못했어요. 헤르메스가 이 컴퓨터에 설치돼 있는지 확인해 주세요.",
+    note_no_kanban: "칸반을 읽지 못했어요.",
+    note_missing_profiles: (list) => `설정 파일에 있지만 헤르메스에 없는 프로필은 빼고 보여 줘요: ${list}`,
+    note_need_api_key: "말 걸기는 API 서버 키가 있어야 해요. README의 '말 걸기 켜기'를 따라 해 주세요.",
+    team_hermes_profile: "헤르메스 프로필",
+    meeting_decompose_topic: (topic, count) => `${topic} · 할 일 ${count}개로 나누는 중`,
+    feed_decompose: (topic, count) => `「${topic}」을 할 일 ${count}개로 나눠 맡겼어요.`,
+    err_need_api_key: "이 봇에게 말을 걸려면 API 서버 키가 필요해요. README의 '말 걸기 켜기'를 봐 주세요.",
+    err_hermes_rejected: (status) => `헤르메스가 요청을 받지 않았어요 (HTTP ${status})`,
+    chat_progress_failed: (msg) => `진행 상황을 받지 못했어요: ${msg}`,
+    task_using_tool: (tool) => `${tool} 사용 중`,
+    chat_empty_reply: "(빈 답변)",
+    chat_task_stopped: "작업이 멈췄어요.",
+    err_meeting_hint: "헤르메스 모드에서는 칸반 할 일을 `hermes kanban decompose <할 일 id>` 로 나누면 회의 장면이 보여요.",
+    profile_missing: (p) => `프로필 '${p}' 없음`,
+  },
+  en: {
+    msg_empty: "Message cannot be empty.",
+    demo_mode: "Demo mode",
+    hermes_mode: "Hermes live mode",
+    open_browser: "Open in browser",
+    task_checking: "Checking",
+    task_processing: "Processing request",
+    task_working: "Working",
+    task_approval: "Approval needed",
+    task_done_report: "Reporting finished task",
+    task_gateway_stopped: "Gateway stopped",
+    task_meeting: "In meeting",
+    task_sending_reply: "Sending reply",
+    task_sent_replies: "Sent 3 replies",
+    chat_approve: "Please proceed",
+    chat_deny: "Do not proceed",
+    feed_sent_replies: "Sent replies to 3 customers.",
+    note_no_hermes: "hermes command not found. Please make sure Hermes is installed on this machine.",
+    note_no_kanban: "Could not read Kanban.",
+    note_missing_profiles: (list) => `Profiles in config but missing in Hermes are omitted: ${list}`,
+    note_need_api_key: "Chatting requires an API server key. Follow 'Enable chat' in the README.",
+    team_hermes_profile: "Hermes Profile",
+    meeting_decompose_topic: (topic, count) => `${topic} · Splitting into ${count} tasks`,
+    feed_decompose: (topic, count) => `Assigned "${topic}" split into ${count} tasks.`,
+    err_need_api_key: "An API server key is required to talk to this bot. See 'Enable chat' in the README.",
+    err_hermes_rejected: (status) => `Hermes did not accept the request (HTTP ${status})`,
+    chat_progress_failed: (msg) => `Failed to receive progress: ${msg}`,
+    task_using_tool: (tool) => `Using ${tool}`,
+    chat_empty_reply: "(empty response)",
+    chat_task_stopped: "Task stopped.",
+    err_meeting_hint: "In Hermes mode, running `hermes kanban decompose <task id>` shows the meeting scene.",
+    profile_missing: (p) => `Profile '${p}' not found`,
+  },
+};
+
+function t(lang, key, ...args) {
+  const table = STRINGS[lang] || STRINGS.ko;
+  const val = table[key] ?? STRINGS.ko[key] ?? key;
+  return typeof val === "function" ? val(...args) : val;
+}
+
+module.exports = { STRINGS, t };
+
